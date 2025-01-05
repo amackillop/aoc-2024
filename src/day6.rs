@@ -50,16 +50,8 @@ struct Guard {
 }
 
 pub fn part_1(input: &str) -> usize {
-    let (map, mut current_guard) = parse_map(input);
-    let mut visited = HashSet::from([(current_guard.row, current_guard.col)]);
-    loop {
-        let new_guard = move_guard(&map, current_guard);
-        if new_guard.exited {
-            break;
-        }
-        visited.insert((new_guard.row, new_guard.col));
-        current_guard = new_guard;
-    }
+    let (map, guard) = parse_map(input);
+    let visited = tiles_visited(&map, guard);
     visited.len()
 }
 
@@ -68,16 +60,7 @@ pub fn part_1(input: &str) -> usize {
 // TODO: Try to more efficiently move the guard by taking many steps at once
 pub fn part_2(input: &str) -> usize {
     let (mut map, starting_guard) = parse_map(input);
-    let mut current_guard = starting_guard;
-    let mut visited = HashSet::from([(current_guard.row, current_guard.col)]);
-    loop {
-        let new_guard = move_guard(&map, current_guard);
-        if new_guard.exited {
-            break;
-        }
-        visited.insert((new_guard.row, new_guard.col));
-        current_guard = new_guard;
-    }
+    let visited = tiles_visited(&map, starting_guard);
 
     let mut loop_positions = 0;
     for (row, col) in visited {
@@ -100,6 +83,20 @@ pub fn part_2(input: &str) -> usize {
         map[row][col] = Tile::Empty;
     }
     loop_positions
+}
+
+fn tiles_visited(map: &Vec<Vec<Tile>>, guard: Guard) -> HashSet<(usize, usize)> {
+    let mut current_guard = guard;
+    let mut visited = HashSet::from([(current_guard.row, current_guard.col)]);
+    loop {
+        let new_guard = move_guard(map, current_guard);
+        if new_guard.exited {
+            break;
+        }
+        visited.insert((new_guard.row, new_guard.col));
+        current_guard = new_guard;
+    }
+    visited
 }
 
 /// Move the guard according to the direction and the map.

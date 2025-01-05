@@ -1,4 +1,4 @@
-use aoc_2024::{day1, day2, day3, day4, day5, day6, day7, read_input};
+use aoc_2024::{day1, day2, day3, day4, day5, day6, day7, day8, read_input};
 use clap::Parser;
 
 #[derive(Parser)]
@@ -27,6 +27,8 @@ fn main() {
         (6, 2) => day6::part_2(&input),
         (7, 1) => day7::part_1(&input),
         (7, 2) => day7::part_2(&input),
+        (8, 1) => day8::part_1(&input),
+        (8, 2) => day8::part_2(&input),
         _ => panic!("Day/part not implemented"),
     };
 

@@ -9,6 +9,7 @@ pub mod day4;
 pub mod day5;
 pub mod day6;
 pub mod day7;
+pub mod day8;
 
 use nom::{Finish as _, IResult, character::complete::digit1, combinator::map_res};
 use std::{cmp::min, str::FromStr};
