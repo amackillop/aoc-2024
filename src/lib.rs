@@ -1,4 +1,5 @@
 #![feature(gen_blocks)]
+#![feature(iter_array_chunks)]
 #![feature(test)]
 extern crate test;
 
@@ -10,11 +11,28 @@ pub mod day5;
 pub mod day6;
 pub mod day7;
 pub mod day8;
+pub mod day9;
+pub mod day10;
+// pub mod day11;
+// pub mod day12;
+// pub mod day13;
+// pub mod day14;
+// pub mod day15;
+// pub mod day16;
+// pub mod day17;
+// pub mod day18;
+// pub mod day19;
+// pub mod day20;
+// pub mod day21;
+// pub mod day22;
+// pub mod day23;
+// pub mod day24;
+// pub mod day25;
 
 use nom::{Finish as _, IResult, character::complete::digit1, combinator::map_res};
 use std::{cmp::min, str::FromStr};
 
-// Load lines from a file
+// Read the content from an input file
 pub fn read_input(day: u8) -> String {
     std::fs::read_to_string(format!("./input/{day}.txt")).unwrap()
 }
