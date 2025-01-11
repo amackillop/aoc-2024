@@ -3,6 +3,7 @@ use std::{
     fmt::Debug,
 };
 
+
 #[derive(Debug)]
 struct Antenna {
     frequency: char,
@@ -18,20 +19,20 @@ struct AntiNode {
 
 pub fn part_1(input: &str) -> usize {
     let (antennas, max_row, max_col) = parse_antennas(input);
-    solution(&antennas, max_row, max_col, compute_antinodes_1)
+    solution(&antennas, |a_1, a_2| {
+        compute_antinodes_1(a_1, a_2, max_row, max_col)
+    })
 }
 
 pub fn part_2(input: &str) -> usize {
     let (antennas, max_row, max_col) = parse_antennas(input);
-    solution(&antennas, max_row, max_col, |antenna_1, antenna_2| {
-        compute_antinodes_2(antenna_1, antenna_2, max_row, max_col)
+    solution(&antennas, |a_1, a_2| {
+        compute_antinodes_2(a_1, a_2, max_row, max_col)
     })
 }
 
 fn solution(
     antennas: &[Antenna],
-    max_row: i32,
-    max_col: i32,
     antinode_fn: impl Fn(&Antenna, &Antenna) -> Vec<AntiNode>,
 ) -> usize {
     antennas
@@ -42,12 +43,6 @@ fn solution(
         })
         .iter()
         .flat_map(|(_, antennas)| antinodes(antennas, &antinode_fn))
-        .filter(|antinode| {
-            antinode.row >= 0
-                && antinode.col >= 0
-                && antinode.row <= max_row
-                && antinode.col <= max_col
-        })
         .collect::<HashSet<_>>()
         .len()
 }
@@ -80,9 +75,15 @@ fn new_antinodes(
         .collect()
 }
 
-fn compute_antinodes_1(antenna_1: &Antenna, antenna_2: &Antenna) -> Vec<AntiNode> {
+fn compute_antinodes_1(
+    antenna_1: &Antenna,
+    antenna_2: &Antenna,
+    max_row: i32,
+    max_col: i32,
+) -> Vec<AntiNode> {
     let row_diff = antenna_2.row - antenna_1.row;
     let col_diff = antenna_2.col - antenna_1.col;
+
     let antinode_1 = AntiNode {
         row: antenna_1.row - row_diff,
         col: antenna_1.col - col_diff,
@@ -91,7 +92,14 @@ fn compute_antinodes_1(antenna_1: &Antenna, antenna_2: &Antenna) -> Vec<AntiNode
         row: antenna_2.row + row_diff,
         col: antenna_2.col + col_diff,
     };
-    [antinode_1, antinode_2].to_vec()
+    vec![antinode_1, antinode_2]
+        .into_iter()
+        .filter(|antinode| is_within_bounds(antinode, max_row, max_col))
+        .collect()
+}
+
+fn is_within_bounds(node: &AntiNode, max_row: i32, max_col: i32) -> bool {
+    node.row >= 0 && node.row <= max_row && node.col >= 0 && node.col <= max_col
 }
 
 fn compute_antinodes_2(
@@ -102,33 +110,33 @@ fn compute_antinodes_2(
 ) -> Vec<AntiNode> {
     let row_diff = antenna_2.row - antenna_1.row;
     let col_diff = antenna_2.col - antenna_1.col;
+
     let mut antinodes = vec![AntiNode {
         row: antenna_1.row,
         col: antenna_1.col,
     }];
-    for i in 1.. {
-        let antinode = AntiNode {
-            row: antenna_1.row - i * row_diff,
-            col: antenna_1.col - i * col_diff,
-        };
-        if antinode.row < 0 || antinode.col < 0 {
-            break;
-        }
-        antinodes.push(antinode);
-    }
 
-    for i in 1.. {
-        let antinode = AntiNode {
-            row: antenna_1.row + i * row_diff,
-            col: antenna_1.col + i * col_diff,
-        };
-        if antinode.row > max_row || antinode.col > max_col {
-            break;
-        }
-        antinodes.push(antinode);
-    }
-
+    antinodes.extend(
+        generate_antinodes(antenna_1, -row_diff, -col_diff)
+            .take_while(|antinode| is_within_bounds(antinode, max_row, max_col))
+    );
+    antinodes.extend(
+        generate_antinodes(antenna_1, row_diff, col_diff)
+            .take_while(|antinode| is_within_bounds(antinode, max_row, max_col)),
+    );
     antinodes
+}
+
+fn generate_antinodes(
+    start: &Antenna,
+    row_step: i32,
+    col_step: i32,
+) -> impl Iterator<Item = AntiNode> {
+    (1..).map(move |i| {
+        let row = start.row + i * row_step;
+        let col = start.col + i * col_step;
+        AntiNode { row, col }
+    })
 }
 
 /// Get the antennas from the input as well as the bounds (max_row, max_col) of the grid
@@ -178,7 +186,7 @@ mod tests {
         let (antennas, max_row, max_col) = parse_antennas(&input);
 
         b.iter(|| {
-            solution(&antennas, max_row, max_col, |a_1, a_2| {
+            solution(&antennas, |a_1, a_2| {
                 compute_antinodes_2(a_1, a_2, max_row, max_col)
             })
         });
@@ -196,7 +204,7 @@ mod tests {
             row: 5,
             col: 5,
         };
-        let antinodes = compute_antinodes_1(&antenna_1, &antenna_2);
+        let antinodes = compute_antinodes_1(&antenna_1, &antenna_2, 9, 9);
         assert_eq!(antinodes, vec![AntiNode { row: 1, col: 3 }, AntiNode {
             row: 7,
             col: 6
@@ -215,14 +223,13 @@ mod tests {
             row: 5,
             col: 5,
         };
-        let antinodes = compute_antinodes_2(&antenna_1, &antenna_2, 11, 11);
+        let antinodes = compute_antinodes_2(&antenna_1, &antenna_2, 9, 9);
         assert_eq!(antinodes, vec![
             AntiNode { row: 3, col: 4 },
             AntiNode { row: 1, col: 3 },
             AntiNode { row: 5, col: 5 },
             AntiNode { row: 7, col: 6 },
             AntiNode { row: 9, col: 7 },
-            AntiNode { row: 11, col: 8 }
         ]);
     }
 }
