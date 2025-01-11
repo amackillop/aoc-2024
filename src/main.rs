@@ -1,5 +1,9 @@
 use aoc_2024::{day1, day2, day3, day4, day5, day6, day7, day8, read_input};
 use clap::Parser;
+use tikv_jemallocator::Jemalloc;
+
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
 
 #[derive(Parser)]
 struct Args {
